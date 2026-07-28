@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="form-hero">
+  <span class="eyebrow">🗂️ History & Storage</span>
+  <h1>Every simulation you've run</h1>
+  <p class="hero-sub">Track how your campaigns evolve over time.</p>
+</section>
+
+{% if campaigns %}
+<div class="history-table-wrap glass">
+  <table class="history-table">
+    <thead>
+      <tr>
+        <th>Campaign</th>
+        <th>Objective</th>
+        <th>Engagement</th>
+        <th>Conversion</th>
+        <th>Growth Potential</th>
+        <th>Date</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in campaigns %}
+      <tr>
+        <td><a href="{{ url_for('results', campaign_id=c.id) }}" class="history-link">{{ c.product_name }}</a></td>
+        <td>{{ c.objective }}</td>
+        <td>{{ c.engagement_score|default('—') }}</td>
+        <td>{{ c.conversion_probability|default('—') }}%</td>
+        <td><span
+            class="badge badge-{{ c.growth_potential|lower|replace(' ','-') if c.growth_potential else 'moderate' }}">{{
+            c.growth_potential or '—' }}</span></td>
+        <td class="mono-cell">{{ c.created_at[:10] }}</td>
+        <td>
+          <form action="{{ url_for('delete_campaign', campaign_id=c.id) }}" method="POST"
+            onsubmit="return confirm('Delete this simulation?');">
+            <button type="submit" class="icon-btn" title="Delete">🗑️</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state glass">
+  <span class="empty-emoji">💰</span>
+  <h3>No simulations yet</h3>
+  <p>Run your first campaign simulation to see it appear here.</p>
+  <a href="{{ url_for('simulate_form') }}" class="btn btn-primary">Run a Simulation 🚀</a>
+</div>
+{% endif %}
+
+{% endblock %}

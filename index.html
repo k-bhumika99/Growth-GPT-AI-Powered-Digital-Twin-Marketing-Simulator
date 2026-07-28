@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Growth GPT — AI Digital Twin Marketing Intelligence{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<section class="hero" id="hero-section">
+  <div class="hero-copy">
+    <span class="eyebrow">🎯 AI Digital Twin Marketing Intelligence</span>
+    <h1>Meet your customers <span class="highlight-coral">before</span> you spend a single rupee on ads.</h1>
+    <p class="hero-sub">
+      Growth GPT builds AI digital twins of your target audience, simulates how real customer personas react to your
+      headlines, copy, and offers, and predicts conversion probability before launch day.
+    </p>
+    <div class="hero-actions">
+      {% if current_user %}
+      <a href="{{ url_for('simulate_form') }}" class="btn btn-primary btn-large" id="hero-btn-simulate">Run a Simulation 🚀</a>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-large" id="hero-btn-dashboard">Go to Dashboard 📊</a>
+      {% else %}
+      <a href="{{ url_for('auth', tab='signup') }}" class="btn btn-primary btn-large" id="hero-btn-signup">Run a Simulation 🚀</a>
+      <a href="{{ url_for('auth', tab='signin') }}" class="btn btn-ghost btn-large" id="hero-btn-dashboard">Go to Dashboard 📊</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="hero-visual" id="hero-visual-3d">
+    <img src="{{ url_for('static', filename='images/hero_3d_illustration.png') }}" 
+         alt="AI Digital Twin Marketing Intelligence Dashboard 3D" 
+         class="hero-3d-img">
+  </div>
+</section>
+
+<!-- 4-Column Stats Ribbon -->
+<section class="stats-ribbon" id="stats-ribbon-section">
+  <div class="stat-ribbon-card">
+    <span class="stat-icon-badge badge-bg-coral">🚀</span>
+    <div>
+      <div class="stat-value">5</div>
+      <div class="stat-label-text">Simulations Run</div>
+    </div>
+  </div>
+  <div class="stat-ribbon-card">
+    <span class="stat-icon-badge badge-bg-amber">🕒</span>
+    <div>
+      <div class="stat-value">~15s</div>
+      <div class="stat-label-text">Avg. Simulation Time</div>
+    </div>
+  </div>
+  <div class="stat-ribbon-card">
+    <span class="stat-icon-badge badge-bg-sage">₹</span>
+    <div>
+      <div class="stat-value">₹0</div>
+      <div class="stat-label-text">Ad Spend Saved</div>
+    </div>
+  </div>
+  <div class="stat-ribbon-card">
+    <span class="stat-icon-badge badge-bg-violet">📈</span>
+    <div>
+      <div class="stat-value">92%</div>
+      <div class="stat-label-text">Accuracy Rate</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4-Column Feature Cards Ribbon -->
+<section class="features-ribbon" id="features-ribbon-section">
+  <div class="feature-ribbon-card">
+    <span class="stat-icon-badge badge-bg-violet" style="width:38px; height:38px; font-size:16px;">👥</span>
+    <div>
+      <h4>AI Digital Twins</h4>
+      <p>Create realistic customer personas in seconds.</p>
+    </div>
+  </div>
+  <div class="feature-ribbon-card">
+    <span class="stat-icon-badge badge-bg-coral" style="width:38px; height:38px; font-size:16px;">📊</span>
+    <div>
+      <h4>Smart Predictions</h4>
+      <p>Predict engagement and conversion with AI.</p>
+    </div>
+  </div>
+  <div class="feature-ribbon-card">
+    <span class="stat-icon-badge badge-bg-amber" style="width:38px; height:38px; font-size:16px;">💡</span>
+    <div>
+      <h4>Actionable Insights</h4>
+      <p>Get clear recommendations to improve campaigns.</p>
+    </div>
+  </div>
+  <div class="feature-ribbon-card">
+    <span class="stat-icon-badge badge-bg-sage" style="width:38px; height:38px; font-size:16px;">🛡️</span>
+    <div>
+      <h4>Save Time &amp; Money</h4>
+      <p>Optimize before launch and maximize your ROI.</p>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="steps-section" id="how-it-works">
+  <h2 class="section-title section-title-center">From Ad Copy to Predictive Intelligence in 4 Steps</h2>
+  <div class="steps-grid">
+    <div class="step-card glass">
+      <span class="step-num">01</span>
+      <span class="step-emoji">✍️</span>
+      <h3>Input Campaign Brief</h3>
+      <p>Enter your product description, target audience demographics, campaign message, and objective.</p>
+    </div>
+    <div class="step-connector">→</div>
+    <div class="step-card glass">
+      <span class="step-num">02</span>
+      <span class="step-emoji">💰</span>
+      <h3>Synthesize Digital Twins</h3>
+      <p>Gemini generates 5 distinct customer personas representing different mindsets, budgets, and buying habits.</p>
+    </div>
+    <div class="step-connector">→</div>
+    <div class="step-card glass">
+      <span class="step-num">03</span>
+      <span class="step-emoji">💬</span>
+      <h3>Simulate Reactions</h3>
+      <p>Each twin evaluates your campaign, voicing authentic reactions, objections, and buying intentions.</p>
+    </div>
+    <div class="step-connector">→</div>
+    <div class="step-card glass">
+      <span class="step-num">04</span>
+      <span class="step-emoji">📈</span>
+      <h3>Score &amp; Export</h3>
+      <p>Receive an engagement score out of 100, conversion probability %, ranked fixes, and instant PDF/CSV exports.</p>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,1075 @@
+{% extends "base.html" %}
+{% block title %}Simulation Analysis · Growth GPT{% endblock %}
+
+{% block content %}
+
+{% set overview = result.campaign_overview or {} %}
+{% set ca = result.campaign_analysis or {} %}
+{% set twins = result.digital_twins or [] %}
+{% set img_analysis = result.image_analysis or {} %}
+{% set comp_analysis = result.competitor_analysis or {} %}
+{% set pred = result.predictions or {} %}
+{% set psych = result.psychology_analysis or {} %}
+{% set objections = result.objections or [] %}
+{% set improvements = result.improvements or {} %}
+{% set readiness = result.readiness or {} %}
+
+<style>
+  /* Tabs Styling */
+  .results-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    margin: 24px auto 32px;
+    max-width: 950px;
+    background: rgba(250, 243, 232, 0.85);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+  }
+  .tab-link {
+    flex: 0 1 auto;
+    padding: 10px 18px;
+    border: none;
+    background: none;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--muted);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .tab-link:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.5);
+  }
+  .tab-link.active {
+    color: #FFFFFF;
+    background: var(--primary-gradient);
+    box-shadow: var(--shadow-glow);
+  }
+  .tab-pane {
+    display: none;
+    animation: fadeInPane 0.4s ease forwards;
+  }
+  .tab-pane.active {
+    display: block;
+  }
+  @keyframes fadeInPane {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Grid Layouts */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 768px) {
+    .overview-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+  }
+  
+  /* Details List */
+  .details-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .details-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14.5px;
+  }
+  .details-list li:last-child {
+    border-bottom: none;
+  }
+  .details-label {
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .details-value {
+    font-weight: 600;
+    color: var(--text);
+    text-align: right;
+  }
+
+  /* Status Badges */
+  .status-badge {
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-green { background: var(--sage-soft); color: #2E5A44; border: 1px solid rgba(130, 167, 150, 0.3); }
+  .status-yellow { background: var(--amber-soft); color: #7A5315; border: 1px solid rgba(229, 168, 75, 0.3); }
+  .status-red { background: var(--coral-soft); color: #8A3527; border: 1px solid rgba(232, 122, 100, 0.3); }
+
+  /* Accordion panels */
+  .accordion-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: all 0.3s;
+  }
+  .accordion-header {
+    padding: 16px 20px;
+    background: rgba(255, 253, 248, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .accordion-header:hover {
+    background: rgba(255, 253, 248, 0.9);
+  }
+  .accordion-content {
+    display: none;
+    padding: 20px;
+    border-top: 1px solid var(--border);
+    background: #FFFFFF;
+  }
+  .accordion-item.active .accordion-content {
+    display: block;
+  }
+  .accordion-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+  }
+  .accordion-arrow {
+    transition: transform 0.2s;
+  }
+  .accordion-item.active .accordion-arrow {
+    transform: rotate(90deg);
+  }
+
+  /* Psychology triggers list */
+  .psycho-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 768px) {
+    .psycho-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .psycho-card {
+    padding: 16px;
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .psycho-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .psycho-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .psycho-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(180, 130, 90, 0.1);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .psycho-fill {
+    height: 100%;
+    background: var(--primary-gradient);
+    border-radius: 100px;
+  }
+  .psycho-val {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 13px;
+    width: 32px;
+    text-align: right;
+  }
+
+  /* Explainable AI block */
+  .explain-block {
+    background: rgba(250, 243, 232, 0.5);
+    border-left: 4px solid var(--primary);
+    padding: 12px 16px;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin-top: 10px;
+    font-size: 13.5px;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Compare Card */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .compare-table th {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+  .compare-table td {
+    padding: 16px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14.5px;
+  }
+  .compare-metric {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .compare-before {
+    color: var(--muted);
+  }
+  .compare-after {
+    font-weight: 700;
+    color: var(--sage);
+  }
+</style>
+
+<!-- Plotly CDN for charts -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<section class="results-header" style="margin-top: 32px;">
+  <div>
+    <span class="eyebrow">📊 Simulation Results</span>
+    <h1>{{ campaign.product_name }}</h1>
+    <p class="hero-sub" style="margin: 0 auto;">{{ overview.campaign_name or 'Campaign Report' }} · Simulated with GrowthGPT AI</p>
+  </div>
+</section>
+
+<!-- Tabs Navigation -->
+<nav class="results-tabs">
+  <button class="tab-link active" onclick="openTab(event, 'overview')">🎯 Overview</button>
+  <button class="tab-link" onclick="openTab(event, 'analysis')">📝 Campaign Analysis</button>
+  <button class="tab-link" onclick="openTab(event, 'twins')">🧑‍🤝‍🧑 Digital Twins</button>
+  <button class="tab-link" onclick="openTab(event, 'simulation')">💬 Behaviour Simulation</button>
+  <button class="tab-link" onclick="openTab(event, 'image')">🖼️ Image Analysis</button>
+  <button class="tab-link" onclick="openTab(event, 'predictions')">📈 Predictions</button>
+  <button class="tab-link" onclick="openTab(event, 'recommendations')">💡 Recommendations</button>
+  <button class="tab-link" onclick="openTab(event, 'scenario')">🧪 Scenario Simulator</button>
+  <button class="tab-link" onclick="openTab(event, 'reports')">📁 Reports</button>
+</nav>
+
+
+<!-- ==========================================
+     TAB: OVERVIEW
+     ========================================== -->
+<div id="overview" class="tab-pane active">
+  <div class="overview-grid">
+    <div class="glass" style="padding: 28px;">
+      <h3 class="card-title">📢 Campaign Brief Summary</h3>
+      <ul class="details-list">
+        <li>
+          <span class="details-label">Campaign Name</span>
+          <span class="details-value">{{ overview.campaign_name or campaign.product_name }}</span>
+        </li>
+        <li>
+          <span class="details-label">Product Name</span>
+          <span class="details-value">{{ overview.product_name or campaign.product_name }}</span>
+        </li>
+        <li>
+          <span class="details-label">Campaign Objective</span>
+          <span class="details-value">{{ overview.objective or campaign.objective }}</span>
+        </li>
+        <li>
+          <span class="details-label">Target Audience</span>
+          <span class="details-value" style="max-width: 60%; word-break: break-word;">{{ overview.target_audience or campaign.target_audience }}</span>
+        </li>
+        <li>
+          <span class="details-label">Marketing Platform</span>
+          <span class="details-value">{{ overview.marketing_platform or 'Not Specified' }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="glass" style="padding: 28px; display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <h3 class="card-title">⚡ AI Launch Readiness</h3>
+        <div style="margin: 20px 0; text-align: center;">
+          {% set status = overview.readiness_status or 'Needs Improvement' %}
+          {% if status == 'Ready to Launch' %}
+            <span class="status-badge status-green">🟢 {{ status }}</span>
+          {% elif status == 'Needs Improvement' %}
+            <span class="status-badge status-yellow">🟡 {{ status }}</span>
+          {% else %}
+            <span class="status-badge status-red">🔴 {{ status }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        <ul class="details-list">
+          <li>
+            <span class="details-label">Overall Score</span>
+            <span class="details-value" style="font-size: 20px; color: var(--primary);">{{ overview.overall_score or 70 }}/100</span>
+          </li>
+          <li>
+            <span class="details-label">AI Confidence Level</span>
+            <span class="details-value">{{ overview.confidence_level or 80 }}%</span>
+          </li>
+        </ul>
+        <div class="pw-strength-track" style="margin-top: 8px;">
+          <div class="pw-strength-fill" style="{{ 'width: ' ~ (overview.confidence_level or 80) ~ '%; background: var(--primary-gradient);' }}"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass" style="padding: 28px; margin-bottom: 32px;">
+    <h3 class="card-title">🧠 Overall Simulation Conclusion</h3>
+    <p style="font-size: 15.5px; line-height: 1.6; color: var(--muted); margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
+      {{ readiness.conclusion or 'The AI Digital Twin simulation suggests this campaign contains solid elements but requires minor copy and call-to-action tuning to guarantee optimal engagement with target demographics.' }}
+    </p>
+  </div>
+</div>
+
+<!-- ==========================================
+     TAB: CAMPAIGN ANALYSIS
+     ========================================== -->
+<div id="analysis" class="tab-pane">
+  <div class="glass" style="padding: 28px; margin-bottom: 24px;">
+    <h3 class="card-title">📝 AI Campaign Summary</h3>
+    <p style="font-size: 15.5px; line-height: 1.6; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">{{ ca.summary or 'No summary generated.' }}</p>
+  </div>
+
+  <div class="overview-grid" style="margin-bottom: 24px;">
+    <div class="glass" style="padding: 24px;">
+      <h4 style="color: var(--sage); margin-top:0;">✔ Strengths</h4>
+      <ul style="padding-left: 20px; color: var(--muted); font-size: 14.5px; line-height: 1.6;">
+        {% for s in ca.strengths %}
+          <li>{{ s }}</li>
+        {% else %}
+          <li>Clear features description</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="glass" style="padding: 24px;">
+      <h4 style="color: var(--coral); margin-top:0;">❌ Weaknesses</h4>
+      <ul style="padding-left: 20px; color: var(--muted); font-size: 14.5px; line-height: 1.6;">
+        {% for w in ca.weaknesses %}
+          <li>{{ w }}</li>
+        {% else %}
+          <li>Lacks urgency triggers</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="glass" style="padding: 28px;">
+    <h3 class="card-title">🔍 Element Analysis</h3>
+    <div class="overview-grid" style="gap: 16px; margin-bottom:0;">
+      <div>
+        <ul class="details-list">
+          <li>
+            <span class="details-label">Marketing Goal</span>
+            <span class="details-value">{{ ca.marketing_goal or 'Engagement' }}</span>
+          </li>
+          <li>
+            <span class="details-label">Target Audience Summary</span>
+            <span class="details-value" style="max-width: 60%; word-break: break-word;">{{ ca.target_audience_summary or 'General Segment' }}</span>
+          </li>
+          <li>
+            <span class="details-label">Headline Analysis</span>
+            <span class="details-value" style="max-width: 60%; word-break: break-word;">{{ ca.headline_analysis or 'Not Evaluated' }}</span>
+          </li>
+        </ul>
+      </div>
+      <div>
+        <ul class="details-list">
+          <li>
+            <span class="details-label">CTA Analysis</span>
+            <span class="details-value" style="max-width: 60%; word-break: break-word;">{{ ca.cta_analysis or 'Not Evaluated' }}</span>
+          </li>
+          <li>
+            <span class="details-label">Pricing Analysis</span>
+            <span class="details-value" style="max-width: 60%; word-break: break-word;">{{ ca.pricing_analysis or 'Not Evaluated' }}</span>
+          </li>
+          <li>
+            <span class="details-label">Tone Analysis</span>
+            <span class="details-value" style="max-width: 60%; word-break: break-word;">{{ ca.tone_analysis or 'Not Evaluated' }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
+      <span class="details-label" style="display: block; margin-bottom: 8px;">Keyword Analysis</span>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        {% for kw in ca.keyword_analysis %}
+          <span class="tag tag-theme">#{{ kw }}</span>
+        {% else %}
+          <span class="tag">None</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     TAB: DIGITAL TWINS
+     ========================================== -->
+<div id="twins" class="tab-pane">
+  <div class="twins-grid">
+    {% for t in twins %}
+    <div class="twin-card glass" style="padding: 24px;">
+      <div class="twin-card-head" style="margin-bottom: 16px;">
+        <span class="twin-avatar twin-avatar-lg">🧑</span>
+        <div class="twin-id">
+          <div class="twin-name" style="font-size:16.5px; font-weight:700;">{{ t.name }} <span class="twin-age">· {{ t.age }}</span></div>
+          <div class="twin-segment" style="font-size:12.5px; color: var(--muted);">{{ t.occupation }} · {{ t.location }}</div>
+        </div>
+      </div>
+      
+      <div style="font-size: 13.5px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+        <div><strong>Income:</strong> {{ t.income }}</div>
+        <div><strong>Platform:</strong> {{ t.preferred_platform }}</div>
+      </div>
+
+      <div style="font-size: 13.5px; margin-bottom: 14px; border-top: 1px solid var(--border); padding-top: 10px;">
+        <strong>Interests:</strong>
+        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+          {% for interest in t.interests %}
+            <span class="trait-chip" style="font-size:11px; padding: 3px 8px;">{{ interest }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div style="font-size: 13.5px; display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px;">
+        <div><strong>Buying Behaviour:</strong> <span style="color: var(--muted);">{{ t.buying_behaviour }}</span></div>
+        <div><strong>Buying Motivation:</strong> <span style="color: var(--muted);">{{ t.buying_motivation }}</span></div>
+        <div><strong>Buying Trigger:</strong> <span style="color: var(--muted);">{{ t.buying_trigger }}</span></div>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
+        <span class="badge badge-moderate" style="font-size:11px;">💵 Price sensitivity: {{ t.price_sensitivity }}</span>
+        <span class="badge badge-very-high" style="font-size:11px;">🏆 Loyalty: {{ t.brand_loyalty }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ==========================================
+     TAB: CUSTOMER BEHAVIOUR SIMULATION
+     ========================================== -->
+<div id="simulation" class="tab-pane">
+  <div style="max-width: 840px; margin: 0 auto;">
+    {% for t in twins %}
+    {% set sim = t.get('simulation', {}) %}
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <div class="accordion-title">
+          <span style="font-size: 20px;">👤</span>
+          <span><strong>{{ t.name }}</strong> ({{ t.occupation }})</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          {% set decision = sim.get('buying_decision', 'Consider') %}
+          {% if decision == 'Buy' %}
+            <span class="status-badge status-green" style="padding: 3px 10px; font-size: 11.5px;">Buy</span>
+          {% elif decision == 'No Buy' %}
+            <span class="status-badge status-red" style="padding: 3px 10px; font-size: 11.5px;">No Buy</span>
+          {% else %}
+            <span class="status-badge status-yellow" style="padding: 3px 10px; font-size: 11.5px;">Consider</span>
+          {% endif %}
+          <span class="accordion-arrow">▶</span>
+        </div>
+      </div>
+      <div class="accordion-content">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 14px;">
+          <div>
+            <p><strong>First Impression:</strong> <span style="color: var(--muted);">{{ sim.get('first_impression', '') }}</span></p>
+            <p><strong>Emotion:</strong> <span style="color: var(--muted);">{{ sim.get('emotion', '') }}</span></p>
+            <p><strong>Likes:</strong></p>
+            <ul style="padding-left: 20px; color: var(--muted);">
+              {% for l in sim.get('likes', []) %}<li>{{ l }}</li>{% endfor %}
+            </ul>
+            <p><strong>Dislikes:</strong></p>
+            <ul style="padding-left: 20px; color: var(--muted);">
+              {% for dl in sim.get('dislikes', []) %}<li>{{ dl }}</li>{% endfor %}
+            </ul>
+          </div>
+          <div>
+            <p><strong>Objections / Questions:</strong></p>
+            <ul style="padding-left: 20px; color: var(--muted);">
+              {% for q in sim.get('questions', []) %}<li>{{ q }}</li>{% endfor %}
+            </ul>
+            <p><strong>Purchase Intention:</strong> <span style="color: var(--muted);">{{ sim.get('purchase_intention', '') }}</span></p>
+            <p><strong>Would Recommend?</strong> <span class="badge badge-low">{{ sim.get('would_recommend', '') }}</span></p>
+            
+            <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+              <div>
+                <span class="details-label" style="font-size:12px;">Trust Score</span>
+                <div class="pw-strength-track" style="height:6px;"><div class="pw-strength-fill" style="{{ 'width: ' ~ sim.get('trust_score', 0) ~ '%;' }}"></div></div>
+              </div>
+              <div>
+                <span class="details-label" style="font-size:12px;">Engagement Prob.</span>
+                <div class="pw-strength-track" style="height:6px;"><div class="pw-strength-fill" style="{{ 'width: ' ~ sim.get('engagement_probability', 0) ~ '%;' }}"></div></div>
+              </div>
+              <div>
+                <span class="details-label" style="font-size:12px;">Purchase Prob.</span>
+                <div class="pw-strength-track" style="height:6px;"><div class="pw-strength-fill" style="{{ 'width: ' ~ sim.get('purchase_probability', 0) ~ '%;' }}"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 16px; background: rgba(250, 243, 232, 0.4); padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-style: italic; font-size:13.5px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
+          "{{ sim.get('comment', '') }}"
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ==========================================
+     TAB: IMAGE ANALYSIS
+     ========================================== -->
+<div id="image" class="tab-pane">
+  <div class="overview-grid">
+    <div class="glass" style="padding: 28px; display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <h3 class="card-title">🖼️ Ad Layout Score</h3>
+        <div style="margin: 20px 0; text-align: center;">
+          <span class="status-badge status-green" style="font-size: 24px; padding: 10px 24px;">{{ img_analysis.visual_score or 75 }}/100</span>
+        </div>
+      </div>
+      <div>
+        <ul class="details-list">
+          <li>
+            <span class="details-label">Brand Visibility</span>
+            <span class="details-value">{{ img_analysis.brand_visibility or 'Moderate' }}</span>
+          </li>
+          <li>
+            <span class="details-label">Logo Placement</span>
+            <span class="details-value">{{ img_analysis.logo_placement or 'Top' }}</span>
+          </li>
+          <li>
+            <span class="details-label">CTA Visibility</span>
+            <span class="details-value">{{ img_analysis.cta_visibility or 'Clear' }}</span>
+          </li>
+          <li>
+            <span class="details-label">Text Readability</span>
+            <span class="details-value">{{ img_analysis.text_readability or 'High' }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="glass" style="padding: 28px;">
+      <h3 class="card-title">🎨 Visual Attributes</h3>
+      <ul class="details-list">
+        <li>
+          <span class="details-label">Color Harmony</span>
+          <span class="details-value">{{ img_analysis.color_harmony or 'Balanced' }}</span>
+        </li>
+        <li>
+          <span class="details-label">Visual Balance</span>
+          <span class="details-value">{{ img_analysis.visual_balance or 'Centered' }}</span>
+        </li>
+        <li>
+          <span class="details-label">Product Visibility</span>
+          <span class="details-value">{{ img_analysis.product_visibility or 'High' }}</span>
+        </li>
+        <li>
+          <span class="details-label">Professional Appearance</span>
+          <span class="details-value">{{ img_analysis.professional_appearance or 'Enterprise Grade' }}</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="glass" style="padding: 28px;">
+    <h3 class="card-title">💡 Image Evaluation &amp; Suggestions</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size:14.5px;">
+      <div>
+        <strong style="color: var(--sage);">Strengths:</strong>
+        <ul style="padding-left: 20px; color: var(--muted); margin-top: 6px;">
+          {% for s in img_analysis.strengths %}<li>{{ s }}</li>{% endfor %}
+        </ul>
+      </div>
+      <div>
+        <strong style="color: var(--coral);">Weaknesses:</strong>
+        <ul style="padding-left: 20px; color: var(--muted); margin-top: 6px;">
+          {% for w in img_analysis.weaknesses %}<li>{{ w }}</li>{% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
+      <strong>Suggestions for Optimization:</strong>
+      <ul style="padding-left: 20px; color: var(--muted); margin-top: 6px; font-size:14px;">
+        {% for s in img_analysis.suggestions %}<li>{{ s }}</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     TAB: PREDICTIONS
+     ========================================== -->
+<div id="predictions" class="tab-pane">
+  <!-- KPI Predictors Cards Grid -->
+  <div class="kpi-row" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 24px;">
+    <div class="kpi-card glass">
+      <span class="kpi-label">Engagement Score</span>
+      <span class="kpi-value" style="color: var(--violet);">{{ pred.get('engagement_score', {}).get('value', 70) }}/100</span>
+      <div class="explain-block">
+        <strong>Reason:</strong> {{ pred.get('engagement_score', {}).get('reason', 'Strong platform fit.') }}
+      </div>
+    </div>
+    <div class="kpi-card glass">
+      <span class="kpi-label">Conversion Probability</span>
+      <span class="kpi-value" style="color: var(--sage);">{{ pred.get('conversion_probability', {}).get('value', 60) }}%</span>
+      <div class="explain-block">
+        <strong>Reason:</strong> {{ pred.get('conversion_probability', {}).get('reason', 'Pricing aligns well.') }}
+      </div>
+    </div>
+    <div class="kpi-card glass">
+      <span class="kpi-label">Campaign Performance Score</span>
+      <span class="kpi-value" style="color: var(--primary);">{{ pred.get('campaign_performance_score', {}).get('value', 65) }}/100</span>
+      <div class="explain-block">
+        <strong>Reason:</strong> {{ pred.get('campaign_performance_score', {}).get('reason', 'Target audience aligns.') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-row" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 32px;">
+    <div class="kpi-card glass">
+      <span class="kpi-label">Virality Potential</span>
+      <span class="kpi-value" style="color: var(--amber);">{{ pred.get('virality_potential', {}).get('value', 30) }}%</span>
+      <div class="explain-block">
+        <strong>Reason:</strong> {{ pred.get('virality_potential', {}).get('reason', 'Standard copy presentation.') }}
+      </div>
+    </div>
+    <div class="kpi-card glass">
+      <span class="kpi-label">Estimated ROI</span>
+      <span class="kpi-value" style="color: #4A90E2;">{{ pred.get('estimated_roi', {}).get('value', '2.0x') }}</span>
+      <div class="explain-block">
+        <strong>Reason:</strong> {{ pred.get('estimated_roi', {}).get('reason', 'Healthy conversion margin.') }}
+      </div>
+    </div>
+    <div class="kpi-card glass">
+      <span class="kpi-label">Customer Retention Potential</span>
+      <span class="kpi-value" style="color: var(--muted); font-size: 28px;">{{ pred.get('customer_retention_potential', {}).get('value', 50) }}%</span>
+      <div class="explain-block">
+        <strong>Reason:</strong> {{ pred.get('customer_retention_potential', {}).get('reason', 'Standard product loyalty.') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-charts-grid" style="margin-bottom: 32px;">
+    <div class="glass" style="padding: 24px;">
+      <h3 class="card-title">📊 Simulated Sentiment Insights</h3>
+      <div id="sentimentChart" style="width:100%; height:260px;"></div>
+    </div>
+
+    <!-- Marketing Psychology Analysis -->
+    <div class="glass" style="padding: 24px;">
+      <h3 class="card-title">🧠 Marketing Psychology Analysis</h3>
+      <div class="psycho-grid" style="grid-template-columns: 1fr; gap: 10px;">
+        <div class="psycho-card">
+          <span class="psycho-name">Urgency</span>
+          <div class="psycho-progress-wrap">
+            <div class="psycho-bar"><div class="psycho-fill" style="{{ 'width: ' ~ (psych.urgency or 50) ~ '%;' }}"></div></div>
+            <span class="psycho-val">{{ psych.urgency or 50 }}</span>
+          </div>
+        </div>
+        <div class="psycho-card">
+          <span class="psycho-name">Scarcity</span>
+          <div class="psycho-progress-wrap">
+            <div class="psycho-bar"><div class="psycho-fill" style="{{ 'width: ' ~ (psych.scarcity or 40) ~ '%;' }}"></div></div>
+            <span class="psycho-val">{{ psych.scarcity or 40 }}</span>
+          </div>
+        </div>
+        <div class="psycho-card">
+          <span class="psycho-name">Trust</span>
+          <div class="psycho-progress-wrap">
+            <div class="psycho-bar"><div class="psycho-fill" style="{{ 'width: ' ~ (psych.trust or 75) ~ '%;' }}"></div></div>
+            <span class="psycho-val">{{ psych.trust or 75 }}</span>
+          </div>
+        </div>
+        <div class="psycho-card">
+          <span class="psycho-name">Social Proof</span>
+          <div class="psycho-progress-wrap">
+            <div class="psycho-bar"><div class="psycho-fill" style="{{ 'width: ' ~ (psych.social_proof or 60) ~ '%;' }}"></div></div>
+            <span class="psycho-val">{{ psych.social_proof or 60 }}</span>
+          </div>
+        </div>
+        <div class="psycho-card">
+          <span class="psycho-name">FOMO</span>
+          <div class="psycho-progress-wrap">
+            <div class="psycho-bar"><div class="psycho-fill" style="{{ 'width: ' ~ (psych.fomo or 45) ~ '%;' }}"></div></div>
+            <span class="psycho-val">{{ psych.fomo or 45 }}</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 12px; font-size: 13.5px; border-top: 1px solid var(--border); padding-top: 12px;">
+        <strong>Missing Triggers:</strong>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+          {% for trigger in psych.missing_triggers %}
+            <span class="status-badge status-red" style="font-size:11.5px; padding:3px 10px;">{{ trigger }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     TAB: RECOMMENDATIONS
+     ========================================== -->
+<div id="recommendations" class="tab-pane">
+  <!-- Customer Objection Handling -->
+  <div class="glass" style="padding: 28px; margin-bottom: 28px;">
+    <h3 class="card-title">🛡️ Customer Objection Prediction</h3>
+    <p style="color: var(--muted); font-size:14.5px; margin-bottom: 16px;">Anticipating objections before launch is critical. GrowthGPT suggests overcoming them with these specific updates:</p>
+    <ul class="details-list">
+      {% for obj in objections %}
+      <li style="flex-direction: column; align-items: flex-start; gap: 6px;">
+        <span style="font-weight: 700; color: var(--coral);">⚠️ Objection: "{{ obj.objection }}"</span>
+        <span style="color: var(--muted); font-size: 13.5px; padding-left: 14px;">💡 AI Suggestion: {{ obj.suggestion }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="glass" style="padding: 28px; margin-bottom: 28px;">
+    <h3 class="card-title">🚀 Campaign Content Optimization</h3>
+    <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Use this AI rewritten and optimized content to replace the original text:</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 14.5px;">
+      <div>
+        <p><strong>Optimized Headline:</strong><br><span style="color: var(--primary); font-weight: 600;">"{{ improvements.headline or 'Unlock premium benefit now!' }}"</span></p>
+        <p><strong>Optimized CTA:</strong><br><span style="color: var(--sage); font-weight: 600;">"{{ improvements.cta or 'Claim your offer' }}"</span></p>
+        <p><strong>Optimized Offer:</strong><br><span style="color: var(--text); font-weight: 600;">{{ improvements.offer or 'Free delivery + 15% discount' }}</span></p>
+      </div>
+      <div>
+        <p><strong>Optimized Description:</strong><br><span style="color: var(--muted);">{{ improvements.description or 'A beautiful upgraded description copy.' }}</span></p>
+        <p><strong>Marketing Tone:</strong><br><span style="color: var(--muted);">{{ improvements.marketing_tone or 'Persuasive & Value-oriented' }}</span></p>
+        <p><strong>Platform Strategy:</strong><br><span style="color: var(--muted);">{{ improvements.platform_strategy or 'Focus on Instagram carousel posts' }}</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Priority List -->
+  <div class="glass" style="padding: 28px;">
+    <h3 class="card-title">🎯 Categorized Recommendations</h3>
+    <div class="overview-grid" style="grid-template-columns: repeat(3, 1fr); gap: 16px;">
+      <div class="psycho-card" style="border-top: 4px solid var(--coral);">
+        <h4 style="margin:0 0 8px; color: var(--coral);">High Priority</h4>
+        <ul style="padding-left: 16px; margin:0; font-size:13.5px; color: var(--muted); line-height: 1.5;">
+          {% for r in improvements.categorized_recommendations.high %}<li>{{ r }}</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="psycho-card" style="border-top: 4px solid var(--amber);">
+        <h4 style="margin:0 0 8px; color: var(--amber);">Medium Priority</h4>
+        <ul style="padding-left: 16px; margin:0; font-size:13.5px; color: var(--muted); line-height: 1.5;">
+          {% for r in improvements.categorized_recommendations.medium %}<li>{{ r }}</li>{% endfor %}
+        </ul>
+      </div>
+      <div class="psycho-card" style="border-top: 4px solid var(--sage);">
+        <h4 style="margin:0 0 8px; color: var(--sage);">Low Priority</h4>
+        <ul style="padding-left: 16px; margin:0; font-size:13.5px; color: var(--muted); line-height: 1.5;">
+          {% for r in improvements.categorized_recommendations.low %}<li>{{ r }}</li>{% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     TAB: SCENARIO SIMULATOR
+     ========================================== -->
+<div id="scenario" class="tab-pane">
+  <div class="overview-grid">
+    <div class="glass" style="padding: 28px;">
+      <h3 class="card-title">🧪 Modify Campaign Parameters</h3>
+      <form id="scenarioForm" onsubmit="runScenarioSimulation(event)">
+        <input type="hidden" name="campaign_id" value="{{ campaign.id }}">
+        
+        <div class="field field-full">
+          <label for="scen_price">Change Price</label>
+          <input type="text" id="scen_price" name="price" placeholder="e.g. ₹499 or $19">
+        </div>
+        <div class="field field-full">
+          <label for="scen_offer">Change Offer</label>
+          <input type="text" id="scen_offer" name="offer" placeholder="e.g. Buy 1 Get 1 Free">
+        </div>
+        <div class="field field-full">
+          <label for="scen_cta">Change CTA</label>
+          <input type="text" id="scen_cta" name="cta" placeholder="e.g. Subscribe Now">
+        </div>
+        <div class="field field-full">
+          <label for="scen_audience">Change Target Audience</label>
+          <textarea id="scen_audience" name="target_audience" rows="2" placeholder="Describe updated target demographics..."></textarea>
+        </div>
+        <div class="field field-full">
+          <label for="scen_platform">Change Platform</label>
+          <input type="text" id="scen_platform" name="marketing_platform" placeholder="e.g. TikTok, Google Ads">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-submit" id="scenSubmitBtn" style="margin-top: 16px;">
+          Recalculate Predictions ⚡
+        </button>
+      </form>
+    </div>
+
+    <!-- Comparative Table -->
+    <div class="glass" style="padding: 28px; display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <h3 class="card-title">📊 Before vs After Comparison</h3>
+        <p style="color: var(--muted); font-size:13.5px; margin-bottom: 20px;">See how modifications dynamically adjust predictions across digital twin behaviors.</p>
+        
+        <div id="scenarioLoading" style="display:none; text-align: center; padding: 40px 0;">
+          <div class="loading-twins" style="margin-bottom:10px;">
+            <span class="loading-emoji" style="--d:0s">🧠</span>
+            <span class="loading-emoji" style="--d:0.15s">⚡</span>
+          </div>
+          <p style="font-weight: 700; color: var(--muted);">Recalculating predictions...</p>
+        </div>
+
+        <table class="compare-table" id="compareTable">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Original</th>
+              <th>Modified</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="compare-metric">Overall Score</td>
+              <td class="compare-before" id="before_overall">{{ overview.overall_score or 70 }}/100</td>
+              <td class="compare-after" id="after_overall">—</td>
+            </tr>
+            <tr>
+              <td class="compare-metric">Engagement Score</td>
+              <td class="compare-before" id="before_eng">{{ pred.get('engagement_score', {}).get('value', 70) }}/100</td>
+              <td class="compare-after" id="after_eng">—</td>
+            </tr>
+            <tr>
+              <td class="compare-metric">Conversion Prob.</td>
+              <td class="compare-before" id="before_conv">{{ pred.get('conversion_probability', {}).get('value', 60) }}%</td>
+              <td class="compare-after" id="after_conv">—</td>
+            </tr>
+            <tr>
+              <td class="compare-metric">Readiness Score</td>
+              <td class="compare-before" id="before_readiness">{{ readiness.readiness_score or 72 }}/100</td>
+              <td class="compare-after" id="after_readiness">—</td>
+            </tr>
+            <tr>
+              <td class="compare-metric">Risk Level</td>
+              <td class="compare-before" id="before_risk">{{ readiness.risk_level or 'Medium' }}</td>
+              <td class="compare-after" id="after_risk">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     TAB: REPORTS
+     ========================================== -->
+<div id="reports" class="tab-pane">
+  <!-- Campaign Readiness Conclusion -->
+  <div class="glass" style="padding: 28px; margin-bottom: 28px;">
+    <h3 class="card-title">🏁 Campaign Readiness Report</h3>
+    <ul class="details-list" style="margin-bottom: 20px;">
+      <li>
+        <span class="details-label">Readiness Score</span>
+        <span class="details-value" style="font-size:18px; color: var(--sage);">{{ readiness.readiness_score or 72 }}/100</span>
+      </li>
+      <li>
+        <span class="details-label">Launch Recommendation</span>
+        <span class="details-value">{{ readiness.launch_recommendation or 'Tweak campaign copy' }}</span>
+      </li>
+      <li>
+        <span class="details-label">Risk Level</span>
+        <span class="details-value">{{ readiness.risk_level or 'Medium' }}</span>
+      </li>
+      <li>
+        <span class="details-label">Expected Success Rate</span>
+        <span class="details-value">{{ readiness.expected_success or 'Moderate success with positive return.' }}</span>
+      </li>
+      <li>
+        <span class="details-label">Best Performing Platform</span>
+        <span class="details-value">{{ readiness.best_platform or 'Instagram' }}</span>
+      </li>
+      <li>
+        <span class="details-label">Best Audience Segment</span>
+        <span class="details-value">{{ readiness.best_segment or 'Young Professionals' }}</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="glass" style="padding: 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+    <div>
+      <h3 style="margin: 0 0 6px; font-family: var(--font-display);">Export Report Data</h3>
+      <p style="margin: 0; color: var(--muted); font-size:14.5px;">Download a complete presentation of the AI predictions and analysis.</p>
+    </div>
+    <div style="display: flex; gap: 12px;">
+      <a href="{{ url_for('report_export', campaign_id=campaign.id, fmt='pdf') }}" class="btn btn-primary">Download PDF Report 📄</a>
+      <a href="{{ url_for('report_export', campaign_id=campaign.id, fmt='xlsx') }}" class="btn btn-ghost">Download Excel Report 📊</a>
+    </div>
+  </div>
+</div>
+
+<section class="results-footer-actions" style="margin-top: 40px; display: flex; justify-content: center; gap: 16px;">
+  <a href="{{ url_for('launch_analysis', campaign_id=campaign.id) }}" class="btn btn-primary btn-large">Launch Analysis Decision 🚀</a>
+  <a href="{{ url_for('simulate_form') }}" class="btn btn-ghost btn-large">Run Another Simulation 🔁</a>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function openTab(evt, tabId) {
+    // Hide all tab panes
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    tabPanes.forEach(pane => pane.classList.remove('active'));
+
+    // Remove active class from all buttons
+    const tabLinks = document.querySelectorAll('.tab-link');
+    tabLinks.forEach(link => link.classList.remove('active'));
+
+    // Show selected pane and active button
+    document.getElementById(tabId).classList.add('active');
+    evt.currentTarget.classList.add('active');
+
+    // Special trigger to render Plotly chart when Predictions tab is opened
+    if (tabId === 'predictions') {
+      renderPlotlyChart();
+    }
+  }
+
+  function toggleAccordion(element) {
+    const parent = element.parentElement;
+    parent.classList.toggle('active');
+  }
+
+  function renderPlotlyChart() {
+    {% set safe_pred = result.predictions or {} %}
+    {% set sb = safe_pred.get('sentiment_breakdown', {}) %}
+    const positive = {{ sb.get('positive', 50) }};
+    const neutral = {{ sb.get('neutral', 35) }};
+    const negative = {{ sb.get('negative', 15) }};
+
+    const data = [{
+      values: [positive, neutral, negative],
+      labels: ['Positive', 'Neutral', 'Negative'],
+      type: 'pie',
+      marker: {
+        colors: ['#82A796', '#E5A84B', '#E87A64']
+      },
+      hole: .4
+    }];
+
+    const layout = {
+      height: 250,
+      margin: {"t": 10, "b": 10, "l": 10, "r": 10},
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      font: {
+        family: 'Inter, sans-serif',
+        color: '#2B2418'
+      }
+    };
+
+    Plotly.newPlot('sentimentChart', data, layout, {responsive: true, displayModeBar: false});
+  }
+
+  async function runScenarioSimulation(event) {
+    event.preventDefault();
+    const form = document.getElementById('scenarioForm');
+    const submitBtn = document.getElementById('scenSubmitBtn');
+    const loadingEl = document.getElementById('scenarioLoading');
+    const tableEl = document.getElementById('compareTable');
+
+    const payload = {
+      campaign_id: form.querySelector('[name="campaign_id"]').value,
+      price: document.getElementById('scen_price').value,
+      offer: document.getElementById('scen_offer').value,
+      cta: document.getElementById('scen_cta').value,
+      target_audience: document.getElementById('scen_audience').value,
+      marketing_platform: document.getElementById('scen_platform').value
+    };
+
+    submitBtn.disabled = true;
+    tableEl.style.opacity = '0.3';
+    loadingEl.style.display = 'block';
+
+    try {
+      const response = await fetch('/api/simulate_scenario', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      const result = await response.json();
+      if (result.error) {
+        alert(result.error);
+      } else {
+        // Update comparison table values
+        document.getElementById('after_overall').textContent = result.after.overall_score + '/100';
+        document.getElementById('after_eng').textContent = result.after.engagement_score + '/100';
+        document.getElementById('after_conv').textContent = result.after.conversion_probability + '%';
+        document.getElementById('after_readiness').textContent = result.after.readiness_score + '/100';
+        document.getElementById('after_risk').textContent = result.after.risk_level;
+      }
+    } catch(err) {
+      console.error(err);
+      alert('Error runing scenario simulation. Make sure a valid GEMINI_API_KEY is configured.');
+    } finally {
+      submitBtn.disabled = false;
+      tableEl.style.opacity = '1';
+      loadingEl.style.display = 'none';
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Launch Decision Analysis · Growth GPT{% endblock %}
+
+{% block content %}
+<style>
+  .decision-box-sage { border: 3px solid var(--sage); }
+  .decision-text-sage { color: var(--sage); }
+  
+  .decision-box-amber { border: 3px solid var(--amber); }
+  .decision-text-amber { color: var(--amber); }
+  
+  .decision-box-coral { border: 3px solid var(--coral); }
+  .decision-text-coral { color: var(--coral); }
+</style>
+<section class="results-header" style="display: flex; flex-direction: column; align-items: center; text-align: center; margin: 24px auto 36px;">
+  <span class="eyebrow" style="margin-bottom: 16px;">🚀 Launch Analysis</span>
+  <h1 style="margin: 0 0 16px; font-family: var(--font-display); font-size: 40px; max-width: 800px; line-height: 1.2;">{{ campaign.product_name }}</h1>
+  <p class="hero-sub" style="margin: 0; max-width: 500px; font-size: 16px; color: var(--muted); line-height: 1.5;">Data-driven recommendation on whether to launch this campaign.</p>
+</section>
+
+<!-- Big Decision Banner -->
+<section style="margin-bottom: 48px; text-align: center;">
+  <div class="glass decision-box-{{ color }}" style="display: inline-block; padding: 48px 80px; border-radius: 24px; background: rgba(255, 255, 255, 0.7); max-width: 800px; width: 100%;">
+    <div style="font-size: 80px; margin-bottom: 16px;">{{ emoji }}</div>
+    <h2 class="decision-text-{{ color }}" style="font-family: var(--font-display); font-size: 36px; letter-spacing: 0.05em; margin-bottom: 16px;">
+      {{ decision }}
+    </h2>
+    <p style="font-size: 18px; color: var(--text); line-height: 1.5; font-weight: 500; margin: 0;">
+      {{ reason }}
+    </p>
+  </div>
+</section>
+
+<!-- Graph Analysis -->
+<section style="margin-bottom: 60px;">
+  <h2 class="section-title">📊 Graph Analysis</h2>
+  
+  <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px;">
+    
+    <!-- Sentiment Doughnut -->
+    <div class="glass" style="padding: 24px; display: flex; flex-direction: column; align-items: center;">
+      <h3 style="font-family: var(--font-display); font-size: 18px; margin-bottom: 24px;">Overall Sentiment</h3>
+      <div style="width: 100%; max-width: 250px; aspect-ratio: 1; position: relative;">
+        <canvas id="sentimentChart"></canvas>
+      </div>
+    </div>
+    
+    <!-- Twin Metrics Bar Chart -->
+    <div class="glass" style="padding: 24px; display: flex; flex-direction: column;">
+      <h3 style="font-family: var(--font-display); font-size: 18px; margin-bottom: 24px;">Persona Engagement vs. Purchase Intent</h3>
+      <div style="flex: 1; min-height: 250px; position: relative; width: 100%;">
+        <canvas id="twinsChart"></canvas>
+      </div>
+    </div>
+    
+  </div>
+</section>
+
+<section class="results-footer-actions" style="margin-bottom: 80px;">
+  <a href="{{ url_for('results', campaign_id=campaign.id) }}" class="btn btn-ghost btn-large">← Back to Full Results</a>
+  <a href="{{ url_for('report_export', campaign_id=campaign.id, fmt='pdf') }}" class="btn btn-primary btn-large">Download PDF Report 📄</a>
+</section>
+
+<!-- Data Islands for Charts -->
+{% set pred = result.predictions or result.growth_prediction or {} %}
+{% set sb = pred.sentiment_breakdown or {} %}
+<script type="application/json" id="sentimentData">
+  {
+    "positive": {{ sb.positive|default(0) }},
+    "neutral": {{ sb.neutral|default(0) }},
+    "negative": {{ sb.negative|default(0) }}
+  }
+</script>
+
+<script type="application/json" id="twinsData">
+  [
+    {% for t in result.digital_twins %}
+      {% set sim = t.simulation or {} %}
+      {% set eng_val = sim.engagement_probability or t.engagement_level or t.engagement_probability or 0 %}
+      {% set intent_val = sim.purchase_probability or t.purchase_intent or t.purchase_probability or 0 %}
+      {
+        "name": "{{ t.name|replace('"', '\\"') }}",
+        "engagement": {{ eng_val }},
+        "intent": {{ intent_val }}
+      }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+</script>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Colors from design system
+    const colorSage = '#8BA888';
+    const colorAmber = '#E8A851';
+    const colorCoral = '#D6725C';
+    const colorViolet = '#8E7CC3';
+    
+    // Setup Sentiment Chart
+    const sentimentRaw = document.getElementById('sentimentData').textContent;
+    const sentimentObj = JSON.parse(sentimentRaw);
+    
+    const ctxSentiment = document.getElementById('sentimentChart').getContext('2d');
+    new Chart(ctxSentiment, {
+      type: 'doughnut',
+      data: {
+        labels: ['Positive', 'Neutral', 'Negative'],
+        datasets: [{
+          data: [sentimentObj.positive, sentimentObj.neutral, sentimentObj.negative],
+          backgroundColor: [colorSage, colorAmber, colorCoral],
+          borderWidth: 0,
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, font: { family: "'Inter', sans-serif" } } }
+        }
+      }
+    });
+    
+    // Setup Twins Bar Chart
+    const twinsRaw = document.getElementById('twinsData').textContent;
+    const twinsObj = JSON.parse(twinsRaw);
+    
+    const twinNames = twinsObj.map(t => t.name.split(' ')[0]); // Just first names for brevity
+    const twinEng = twinsObj.map(t => t.engagement);
+    const twinInt = twinsObj.map(t => t.intent);
+    
+    const ctxTwins = document.getElementById('twinsChart').getContext('2d');
+    new Chart(ctxTwins, {
+      type: 'bar',
+      data: {
+        labels: twinNames,
+        datasets: [
+          {
+            label: 'Engagement',
+            data: twinEng,
+            backgroundColor: colorViolet,
+            borderRadius: 4
+          },
+          {
+            label: 'Purchase Intent',
+            data: twinInt,
+            backgroundColor: colorAmber,
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, max: 100, grid: { color: 'rgba(180, 130, 90, 0.1)' } },
+          x: { grid: { display: false } }
+        },
+        plugins: {
+          legend: { position: 'top', labels: { usePointStyle: true, font: { family: "'Inter', sans-serif" } } }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

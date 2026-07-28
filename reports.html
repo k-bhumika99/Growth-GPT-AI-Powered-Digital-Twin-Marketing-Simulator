@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Reports & Export Center — Growth GPT{% endblock %}
+
+{% block content %}
+
+<section class="form-hero" id="reports-hero">
+  <span class="eyebrow">📄 Export Center</span>
+  <h1>Campaign Reports &amp; Export Hub</h1>
+  <p class="hero-sub">Download detailed PDF reports, raw CSV data, or complete Excel workbooks for any simulated
+    campaign.</p>
+</section>
+
+{% if campaigns %}
+
+<section class="reports-header-card glass" id="reports-export-banner">
+  <div>
+    <h3 style="margin: 0 0 4px; font-family: var(--font-display); font-size: 18px; color: var(--text);">Export Bulk
+      Campaign Data</h3>
+    <p style="margin: 0; font-size: 13.5px; color: var(--muted);">Export all saved simulation records into a single
+      consolidated file.</p>
+  </div>
+  <div class="reports-bulk-actions" id="reports-bulk-buttons">
+    <a href="{{ url_for('report_export_all', fmt='csv') }}" class="btn btn-ghost" id="btn-export-all-csv">
+      ⬇️ Export All CSV
+    </a>
+    <a href="{{ url_for('report_export_all', fmt='xlsx') }}" class="btn btn-primary" id="btn-export-all-xlsx">
+      ⬇️ Export All Excel (.xlsx)
+    </a>
+  </div>
+</section>
+
+<div class="dash-card glass" style="margin-bottom: 20px; padding: 18px 24px;" id="reports-filter-bar">
+  <div class="field" style="margin: 0;">
+    <input type="text" id="reportSearch" placeholder="🔍 Search reports by campaign name or objective…"
+      style="padding: 10px 16px; font-size: 14px;">
+  </div>
+</div>
+
+<div class="history-table-wrap glass" id="reports-table-wrap">
+  <table class="history-table" id="reportsTable">
+    <thead>
+      <tr>
+        <th>Campaign</th>
+        <th>Objective</th>
+        <th>Engagement</th>
+        <th>Conversion</th>
+        <th>Growth Potential</th>
+        <th>Date</th>
+        <th>Download Reports</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in campaigns %}
+      <tr class="report-row" data-name="{{ c.product_name | lower }}" data-objective="{{ c.objective | lower }}">
+        <td>
+          <a href="{{ url_for('results', campaign_id=c.id) }}" class="history-link">{{ c.product_name }}</a>
+        </td>
+        <td>{{ c.objective }}</td>
+        <td><strong>{{ c.engagement_score|default('—') }}</strong><span class="metric-suffix">/100</span></td>
+        <td><strong>{{ c.conversion_probability|default('—') }}%</strong></td>
+        <td>
+          <span
+            class="badge badge-{{ c.growth_potential|lower|replace(' ','-') if c.growth_potential else 'moderate' }}">
+            {{ c.growth_potential or '—' }}
+          </span>
+        </td>
+        <td class="mono-cell">{{ c.created_at[:10] }}</td>
+        <td class="report-actions-cell">
+          <a href="{{ url_for('report_export', campaign_id=c.id, fmt='pdf') }}" class="btn btn-primary btn-small"
+            title="Download PDF Report">
+            📄 PDF
+          </a>
+          <a href="{{ url_for('report_export', campaign_id=c.id, fmt='csv') }}" class="btn btn-ghost btn-small"
+            title="Download CSV Data">
+            📊 CSV
+          </a>
+          <a href="{{ url_for('report_export', campaign_id=c.id, fmt='xlsx') }}" class="btn btn-ghost btn-small"
+            title="Download Excel File">
+            📈 Excel
+          </a>
+          <a href="{{ url_for('results', campaign_id=c.id) }}" class="btn btn-ghost btn-small"
+            title="View Full Report Online">
+            👁️ View
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% else %}
+<div class="empty-state glass" id="reports-empty-state">
+  <span class="empty-emoji">🧾</span>
+  <h3>No campaign reports available</h3>
+  <p>Run your first AI simulation to generate exportable PDF and CSV campaign reports.</p>
+  <a href="{{ url_for('simulate_form') }}" class="btn btn-primary">Run First Simulation 🚀</a>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% if campaigns %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("reportSearch");
+    const rows = document.querySelectorAll(".report-row");
+    if (!searchInput || !rows.length) return;
+
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.toLowerCase().trim();
+      rows.forEach(row => {
+        const name = row.dataset.name || "";
+        const obj = row.dataset.objective || "";
+        if (name.includes(query) || obj.includes(query)) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    });
+  });
+</script>
+{% endif %}
+{% endblock %}

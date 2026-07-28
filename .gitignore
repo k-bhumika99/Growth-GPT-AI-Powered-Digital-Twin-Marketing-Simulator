@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+venv/
+growthgpt.db
+server.log
+.DS_Store

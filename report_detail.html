@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% block content %}
+{% set predictions = result.predictions or {} %}
+{% set legacy_gp = result.growth_prediction or {} %}
+
+{# Normalize values so that both new and legacy formats are supported seamlessly #}
+{% set engagement_val = legacy_gp.engagement_score %}
+{% if engagement_val is none %}
+  {% set eng_node = predictions.engagement_score %}
+  {% if eng_node is mapping %}
+    {% set engagement_val = eng_node.value %}
+  {% else %}
+    {% set engagement_val = eng_node %}
+  {% endif %}
+{% endif %}
+
+{% set conversion_val = legacy_gp.conversion_probability %}
+{% if conversion_val is none %}
+  {% set conv_node = predictions.conversion_probability %}
+  {% if conv_node is mapping %}
+    {% set conversion_val = conv_node.value %}
+  {% else %}
+    {% set conversion_val = conv_node %}
+  {% endif %}
+{% endif %}
+
+{% set sentiment_sb = legacy_gp.sentiment_breakdown or predictions.sentiment_breakdown or {} %}
+{% set growth_pot = result.readiness.risk_level or legacy_gp.growth_potential or 'Moderate' %}
+{% set growth_reason_text = result.readiness.conclusion or legacy_gp.growth_potential_reason or 'No reason provided.' %}
+
+{# Assign to a clean structure #}
+{% set gp = {
+  'engagement_score': engagement_val|default(0),
+  'conversion_probability': conversion_val|default(0),
+  'sentiment_breakdown': {
+    'positive': sentiment_sb.positive|default(0),
+    'neutral': sentiment_sb.neutral|default(0),
+    'negative': sentiment_sb.negative|default(0)
+  },
+  'growth_potential': growth_pot,
+  'growth_potential_reason': growth_reason_text
+} %}
+
+{% set ca = result.campaign_analysis or {} %}
+
+{% set legacy_rec = result.recommendations or {} %}
+{% set improvements = result.improvements or {} %}
+{% set readiness = result.readiness or {} %}
+
+{% set priority_act = legacy_rec.priority_action or readiness.launch_recommendation or 'No priority action recommended.' %}
+
+{# Parse weak points from improvements / campaign analysis weaknesses #}
+{% set weak_pts = legacy_rec.weak_points or ca.weaknesses or [] %}
+
+{# Parse headline suggestions #}
+{% if legacy_rec.headline_suggestions %}
+  {% set head_sugs = legacy_rec.headline_suggestions %}
+{% elif improvements.headline %}
+  {% set head_sugs = [improvements.headline] %}
+{% else %}
+  {% set head_sugs = [] %}
+{% endif %}
+
+{# Parse cta suggestions #}
+{% if legacy_rec.cta_suggestions %}
+  {% set cta_sugs = legacy_rec.cta_suggestions %}
+{% elif improvements.cta %}
+  {% set cta_sugs = [improvements.cta] %}
+{% else %}
+  {% set cta_sugs = [] %}
+{% endif %}
+
+{# Parse targeting strategy #}
+{% set target_strat = legacy_rec.targeting_strategy or improvements.target_audience or 'No targeting strategy recommended.' %}
+
+{% set rec = {
+  'priority_action': priority_act,
+  'weak_points': weak_pts,
+  'headline_suggestions': head_sugs,
+  'cta_suggestions': cta_sugs,
+  'targeting_strategy': target_strat
+} %}
+
+<section class="results-header">
+  <div>
+    <span class="eyebrow">🧾 Campaign Report</span>
+    <h1>{{ campaign.product_name }}</h1>
+    <p class="hero-sub">{{ ca.core_objective }}</p>
+    <div class="tag-row">
+      <span class="tag">🎭 Tone: {{ ca.tone }}</span>
+      <span class="tag">🎯 {{ campaign.objective }}</span>
+      <span class="tag">🗓️ {{ campaign.created_at[:10] }}</span>
+    </div>
+  </div>
+  <div class="report-export-actions">
+    <a href="{{ url_for('report_export', campaign_id=campaign.id, fmt='pdf') }}" class="btn btn-primary">⬇️ PDF</a>
+    <a href="{{ url_for('report_export', campaign_id=campaign.id, fmt='xlsx') }}" class="btn btn-ghost">⬇️ Excel</a>
+    <a href="{{ url_for('report_export', campaign_id=campaign.id, fmt='csv') }}" class="btn btn-ghost">⬇️ CSV</a>
+  </div>
+</section>
+
+<section class="metrics-row">
+  <div class="metric-card glass">
+    <svg class="gauge" viewBox="0 0 120 120">
+      <circle class="gauge-track" cx="60" cy="60" r="52"></circle>
+      <circle class="gauge-fill gauge-fill-teal" cx="60" cy="60" r="52" data-pct="{{ gp.engagement_score }}">
+      </circle>
+    </svg>
+    <div class="metric-value">{{ gp.engagement_score }}<span class="metric-suffix">/100</span></div>
+    <div class="metric-label">📈 Engagement Score</div>
+  </div>
+
+  <div class="metric-card glass">
+    <svg class="gauge" viewBox="0 0 120 120">
+      <circle class="gauge-track" cx="60" cy="60" r="52"></circle>
+      <circle class="gauge-fill gauge-fill-violet" cx="60" cy="60" r="52" data-pct="{{ gp.conversion_probability }}">
+      </circle>
+    </svg>
+    <div class="metric-value">{{ gp.conversion_probability }}<span class="metric-suffix">%</span></div>
+    <div class="metric-label">🛒 Conversion Probability</div>
+  </div>
+
+  <div class="metric-card glass metric-card-wide">
+    <div class="metric-label">😊 Sentiment Breakdown</div>
+    <div class="sentiment-bars">
+      <div class="sentiment-row">
+        <span>Positive 🙂</span>
+        <div class="sentiment-track">
+          <div class="sentiment-fill sentiment-pos" data-width="{{ gp.sentiment_breakdown.positive }}"></div>
+        </div>
+        <span>{{ gp.sentiment_breakdown.positive }}%</span>
+      </div>
+      <div class="sentiment-row">
+        <span>Neutral 😐</span>
+        <div class="sentiment-track">
+          <div class="sentiment-fill sentiment-neu" data-width="{{ gp.sentiment_breakdown.neutral }}"></div>
+        </div>
+        <span>{{ gp.sentiment_breakdown.neutral }}%</span>
+      </div>
+      <div class="sentiment-row">
+        <span>Negative 🙁</span>
+        <div class="sentiment-track">
+          <div class="sentiment-fill sentiment-neg" data-width="{{ gp.sentiment_breakdown.negative }}"></div>
+        </div>
+        <span>{{ gp.sentiment_breakdown.negative }}%</span>
+      </div>
+    </div>
+    <div class="growth-potential-row">
+      <span class="badge badge-{{ gp.growth_potential|lower|replace(' ','-') }}">🚀 {{ gp.growth_potential }} Growth
+        Potential</span>
+      <span class="growth-reason">{{ gp.growth_potential_reason }}</span>
+    </div>
+  </div>
+</section>
+
+<section class="twins-section">
+  <h2 class="section-title">🧑‍🤝‍🧑 Digital Twin Reactions</h2>
+  <div class="twins-grid">
+    {% for raw_t in result.digital_twins %}
+      {% set sim = raw_t.simulation or {} %}
+      {% set t = {
+        'name': raw_t.name,
+        'age': raw_t.age,
+        'emoji': raw_t.emoji|default('🧑'),
+        'segment': raw_t.segment or raw_t.location or 'General Segment',
+        'reaction_emoji': raw_t.reaction_emoji or (
+             '🚀' if sim.buying_decision == 'Buy' 
+             else '🛑' if sim.buying_decision == 'No Buy' 
+             else '🤔'
+        ),
+        'emotional_reaction': raw_t.emotional_reaction or sim.emotion or 'Interested',
+        'occupation': raw_t.occupation,
+        'reaction_quote': raw_t.reaction_quote or sim.comment or 'No comment provided.',
+        'engagement_level': sim.engagement_probability or raw_t.engagement_level or 0,
+        'purchase_intent': sim.purchase_probability or raw_t.purchase_intent or 0,
+        'objection': raw_t.objection or (sim.dislikes|join(', ') if sim.dislikes else 'None')
+      } %}
+    <div class="twin-card glass">
+      <div class="twin-card-head">
+        <span class="twin-avatar twin-avatar-lg">{{ t.emoji }}</span>
+        <div class="twin-id">
+          <div class="twin-name">{{ t.name }} <span class="twin-age">· {{ t.age }}</span></div>
+          <div class="twin-segment">{{ t.segment }}</div>
+        </div>
+        <span class="reaction-badge" title="{{ t.emotional_reaction }}">{{ t.reaction_emoji }}</span>
+      </div>
+      <p class="twin-occupation">💼 {{ t.occupation }}</p>
+      <div class="twin-quote-bubble">
+        <span class="quote-mark">“</span>{{ t.reaction_quote }}
+      </div>
+      <div class="twin-meters">
+        <div class="meter">
+          <span class="meter-label">Engagement</span>
+          <div class="meter-track">
+            <div class="meter-fill" data-width="{{ t.engagement_level }}"></div>
+          </div>
+          <span class="meter-num">{{ t.engagement_level }}</span>
+        </div>
+        <div class="meter">
+          <span class="meter-label">Purchase Intent</span>
+          <div class="meter-track">
+            <div class="meter-fill meter-fill-alt" data-width="{{ t.purchase_intent }}"></div>
+          </div>
+          <span class="meter-num">{{ t.purchase_intent }}</span>
+        </div>
+      </div>
+      <div class="twin-objection">⚠️ <strong>Objection:</strong> {{ t.objection }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="recommendations-section">
+  <h2 class="section-title">💡 Growth Recommendations</h2>
+  <div class="rec-priority glass">
+    <span class="rec-priority-emoji">🏆</span>
+    <div>
+      <div class="rec-priority-label">Highest-Impact Fix</div>
+      <div class="rec-priority-text">{{ rec.priority_action }}</div>
+    </div>
+  </div>
+  <div class="rec-grid">
+    <div class="rec-card glass">
+      <h3>⚠️ Weak Points</h3>
+      <ul>{% for w in rec.weak_points %}<li>{{ w }}</li>{% endfor %}</ul>
+    </div>
+    <div class="rec-card glass">
+      <h3>✍️ Headline Ideas</h3>
+      <ul>{% for h in rec.headline_suggestions %}<li>{{ h }}</li>{% endfor %}</ul>
+    </div>
+    <div class="rec-card glass">
+      <h3>👉 CTA Suggestions</h3>
+      <ul>{% for c in rec.cta_suggestions %}<li>{{ c }}</li>{% endfor %}</ul>
+    </div>
+    <div class="rec-card glass">
+      <h3>🎯 Targeting Strategy</h3>
+      <p>{{ rec.targeting_strategy }}</p>
+    </div>
+  </div>
+</section>
+
+<section class="results-footer-actions">
+  <a href="{{ url_for('reports') }}" class="btn btn-ghost btn-large">← All Reports</a>
+  <a href="{{ url_for('simulate_form') }}" class="btn btn-primary btn-large">Run Another Simulation 🔁</a>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // 1. Gauge fills
+    document.querySelectorAll('.gauge-fill').forEach(el => {
+      const pct = parseFloat(el.getAttribute('data-pct')) || 0;
+      const r = 52, c = 2 * Math.PI * r;
+      el.style.strokeDasharray = c;
+      el.style.strokeDashoffset = c;
+      requestAnimationFrame(() => {
+        el.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(.16,1,.3,1)';
+        el.style.strokeDashoffset = c - (c * pct / 100);
+      });
+    });
+
+    // 2. Bar fills
+    document.querySelectorAll('[data-width]').forEach(el => {
+      const w = el.getAttribute('data-width') || '0';
+      el.style.width = w + '%';
+    });
+  });
+</script>
+{% endblock %}

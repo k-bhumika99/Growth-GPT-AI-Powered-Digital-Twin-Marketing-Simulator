@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Create Account' if active_tab == 'signup' else 'Sign In' }} · Growth GPT{% endblock %}
+{% block content %}
+
+<section class="auth-split-layout" id="auth-container">
+  <!-- Left Column: Form Card -->
+  <div class="auth-form-card" id="auth-card-main">
+    <div class="auth-tabs-header" id="auth-tab-row">
+      <button type="button" class="auth-tab-btn {{ 'active' if active_tab != 'signup' }}" data-tab="signin"
+        id="tab-btn-signin">
+        <span>👤</span> Sign In
+      </button>
+      <button type="button" class="auth-tab-btn {{ 'active' if active_tab == 'signup' }}" data-tab="signup"
+        id="tab-btn-signup">
+        <span>👤+</span> Sign Up
+      </button>
+      <span class="auth-active-indicator {{ 'is-signup' if active_tab == 'signup' }}" id="auth-indicator"></span>
+    </div>
+
+    <!-- Sign In Form -->
+    <form class="auth-form {{ 'active' if active_tab != 'signup' }}" data-panel="signin" method="POST"
+      action="{{ url_for('signin') }}" id="form-signin">
+      <span class="auth-badge-icon">💰</span>
+      <h1 class="auth-title">Welcome back!</h1>
+      <p class="auth-subtitle">Sign in to run new campaign simulations and access your dashboard analytics.</p>
+
+      <input type="hidden" name="next" value="{{ next_url }}">
+
+      <div class="field field-full">
+        <label for="signin-email">Email Address <span class="req">*</span></label>
+        <div class="field-input-wrap">
+          <span class="field-input-icon">✉️</span>
+          <input type="email" id="signin-email" name="email" placeholder="admin@medguard.com" required
+            autocomplete="email">
+        </div>
+      </div>
+
+      <div class="field field-full">
+        <label for="signin-password">Password <span class="req">*</span></label>
+        <div class="field-input-wrap password-wrap">
+          <span class="field-input-icon">🔒</span>
+          <input type="password" id="signin-password" name="password" placeholder="••••••••" required
+            autocomplete="current-password">
+          <button type="button" class="pw-toggle" aria-label="Show password">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-row-remember">
+        <label class="form-checkbox">
+          <input type="checkbox" name="remember" checked>
+          <span>Remember me</span>
+        </label>
+        <a href="#" class="forgot-pw-link"
+          onclick="alert('Password reset link sent to your email.'); return false;">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-submit" id="btn-submit-signin">Sign In →</button>
+
+      <div class="social-divider">or continue with</div>
+
+      <div class="social-buttons-grid">
+        <button type="button" class="btn-social">
+          <svg width="16" height="16" viewBox="0 0 24 24">
+            <path fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+            <path fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+          </svg>
+          Google
+        </button>
+        <button type="button" class="btn-social">
+          <svg width="16" height="16" viewBox="0 0 24 24">
+            <path fill="#0A66C2"
+              d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.78a1.62 1.62 0 1 0 0 3.24 1.62 1.62 0 0 0 0-3.24z" />
+          </svg>
+          LinkedIn
+        </button>
+        <button type="button" class="btn-social">
+          <svg width="16" height="16" viewBox="0 0 24 24">
+            <path fill="#F25022" d="M1 1h10v10H1z" />
+            <path fill="#7FBA00" d="M13 1h10v10H1z" />
+            <path fill="#00A4EF" d="M1 13h10v10H1z" />
+            <path fill="#FFB900" d="M13 13h10v10H13z" />
+          </svg>
+          Microsoft
+        </button>
+      </div>
+
+      <p class="auth-switch">New to Growth GPT? <a href="#" data-switch-to="signup" id="link-switch-to-signup">Create a
+          free account</a></p>
+    </form>
+
+    <!-- Sign Up Form -->
+    <form class="auth-form {{ 'active' if active_tab == 'signup' }}" data-panel="signup" method="POST"
+      action="{{ url_for('signup') }}" id="form-signup">
+      <span class="auth-badge-icon">🚀</span>
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-subtitle">Start simulating campaigns before spending a single rupee on ads.</p>
+
+      <input type="hidden" name="next" value="{{ next_url }}">
+
+      <div class="field field-full">
+        <label for="signup-fullname">Full Name <span class="req">*</span></label>
+        <div class="field-input-wrap">
+          <span class="field-input-icon">👤</span>
+          <input type="text" id="signup-fullname" name="full_name" placeholder="Ananya Sharma" required
+            autocomplete="name">
+        </div>
+      </div>
+
+      <div class="field field-full">
+        <label for="signup-email">Work Email <span class="req">*</span></label>
+        <div class="field-input-wrap">
+          <span class="field-input-icon">✉️</span>
+          <input type="email" id="signup-email" name="email" placeholder="you@company.com" required
+            autocomplete="email">
+        </div>
+      </div>
+
+      <div class="field field-full">
+        <label for="signup-password">Password <span class="req">*</span></label>
+        <div class="field-input-wrap password-wrap">
+          <span class="field-input-icon">🔒</span>
+          <input type="password" name="password" id="signup-password" placeholder="At least 8 characters" required
+            minlength="8" autocomplete="new-password">
+          <button type="button" class="pw-toggle" aria-label="Show password">👁️</button>
+        </div>
+        <div class="pw-strength">
+          <div class="pw-strength-track">
+            <div class="pw-strength-fill" id="pw-strength-fill"></div>
+          </div>
+          <span class="pw-strength-label" id="pw-strength-label">Password strength</span>
+        </div>
+      </div>
+
+      <div class="field field-full">
+        <label for="signup-confirm-password">Confirm Password <span class="req">*</span></label>
+        <div class="field-input-wrap password-wrap">
+          <span class="field-input-icon">🔒</span>
+          <input type="password" id="signup-confirm-password" name="confirm_password"
+            placeholder="Re-enter your password" required minlength="8" autocomplete="new-password">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-submit" id="btn-submit-signup">Create Account →</button>
+      <p class="auth-switch">Already have an account? <a href="#" data-switch-to="signin"
+          id="link-switch-to-signin">Sign in</a></p>
+    </form>
+  </div>
+
+  <!-- Right Column: Clean Visual Illustration Only (No Text) -->
+  <div class="auth-illustration-card" id="auth-side-info"
+    style="display:flex; align-items:center; justify-content:center; padding: 24px;">
+    <img src="{{ url_for('static', filename='images/auth_signin_3d_illustration.png') }}"
+      alt="Growth GPT 3D Marketing Intelligence Dashboard" class="auth-3d-img-only">
+  </div>
+</section>
+
+{% endblock %}

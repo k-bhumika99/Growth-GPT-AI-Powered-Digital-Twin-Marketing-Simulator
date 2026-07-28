@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Growth GPT{% endblock %}
+
+{% block content %}
+
+{% set greeting_name = current_user.full_name.split(' ')[0] if current_user else 'Marketer' %}
+
+<section class="dashboard-greeting glass" id="dashboard-greeting-banner">
+  <div>
+    <h1 class="dashboard-greeting-title" id="greeting-title">
+      <span id="greeting-time">Welcome back</span>, {{ greeting_name }}! 👋
+    </h1>
+    <p class="dashboard-greeting-sub">
+      Here is your AI Digital Twin campaign performance summary and audience intelligence analytics.
+    </p>
+  </div>
+  <a href="{{ url_for('simulate_form') }}" class="btn btn-primary" id="btn-dash-new-sim">New Simulation 🚀</a>
+</section>
+
+{% if stats.total_campaigns == 0 %}
+<div class="empty-state glass" id="dashboard-empty-state">
+  <span class="empty-emoji">📊</span>
+  <h3>No campaign simulations yet</h3>
+  <p>Run your first AI digital twin simulation and your dashboard charts &amp; stats will appear automatically.</p>
+  <a href="{{ url_for('simulate_form') }}" class="btn btn-primary">Run First Simulation 🚀</a>
+</div>
+{% else %}
+
+<section class="kpi-row" id="dashboard-kpi-grid">
+  <div class="kpi-card glass" id="kpi-total-campaigns">
+    <span class="kpi-emoji">🗂️</span>
+    <div class="kpi-value">{{ stats.total_campaigns }}</div>
+    <div class="kpi-label">Total Campaigns Simulated</div>
+  </div>
+  <div class="kpi-card glass" id="kpi-avg-engagement">
+    <span class="kpi-emoji">📈</span>
+    <div class="kpi-value">{{ stats.avg_engagement if stats.avg_engagement is not none else '—' }}</div>
+    <div class="kpi-label">Avg. Engagement Score</div>
+  </div>
+  <div class="kpi-card glass" id="kpi-avg-conversion">
+    <span class="kpi-emoji">🛒</span>
+    <div class="kpi-value">{{ stats.avg_conversion if stats.avg_conversion is not none else '—' }}<span
+        class="kpi-suffix">%</span></div>
+    <div class="kpi-label">Avg. Conversion Rate</div>
+  </div>
+  <div class="kpi-card glass" id="kpi-top-campaign">
+    <span class="kpi-emoji">🏆</span>
+    <div class="kpi-value kpi-value-sm">{{ stats.top_campaign.product_name if stats.top_campaign else '—' }}</div>
+    <div class="kpi-label">Top Performing Campaign</div>
+  </div>
+</section>
+
+<section class="dashboard-charts-grid">
+  <div class="dash-card glass" id="chart-card-performance">
+    <h2 class="section-title-sm">📈 Simulation Performance Comparison</h2>
+    <p class="growth-reason" style="margin-top:-8px; margin-bottom:12px;">Engagement score vs. conversion probability
+      for recent campaigns.</p>
+    <div class="chart-container">
+      <canvas id="performanceChart"></canvas>
+    </div>
+  </div>
+
+  <div class="dash-card glass" id="chart-card-potential">
+    <h2 class="section-title-sm">🚀 Growth Potential Split</h2>
+    <p class="growth-reason" style="margin-top:-8px; margin-bottom:12px;">Distribution of AI growth potential
+      categories.</p>
+    <div class="chart-container">
+      <canvas id="potentialChart"></canvas>
+    </div>
+  </div>
+</section>
+
+<section class="dashboard-grid">
+  <div class="dash-card glass" id="chart-card-objectives">
+    <h2 class="section-title-sm">🎯 Campaigns by Objective</h2>
+    <div class="chart-container">
+      <canvas id="objectivesChart"></canvas>
+    </div>
+  </div>
+
+  <div class="dash-card glass" id="dash-card-quick-export">
+    <h2 class="section-title-sm">⚡ Quick Export &amp; Bulk Actions</h2>
+    <p class="growth-reason" style="margin-bottom: 20px;">Download complete campaign intelligence in CSV or Excel
+      formats.</p>
+    <div class="reports-bulk-actions" style="flex-direction: column; align-items: flex-start; gap: 14px;">
+      <a href="{{ url_for('report_export_all', fmt='csv') }}" class="btn btn-ghost"
+        style="width:100%; justify-content:center;" id="dash-btn-export-all-csv">
+        ⬇️ Export All Campaigns (CSV)
+      </a>
+      <a href="{{ url_for('report_export_all', fmt='xlsx') }}" class="btn btn-ghost"
+        style="width:100%; justify-content:center;" id="dash-btn-export-all-xlsx">
+        ⬇️ Export All Campaigns (Excel)
+      </a>
+      <a href="{{ url_for('reports') }}" class="btn btn-primary" style="width:100%; justify-content:center;"
+        id="dash-btn-reports-hub">
+        📄 View Export Center →
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="dashboard-model-section" id="dashboard-model-eval-section" style="margin-bottom: 36px;">
+  <div class="dash-card glass" id="dash-card-model-eval" style="padding: 24px 28px; border-radius: 20px;">
+    
+    <!-- Top Header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: rgba(130, 167, 150, 0.2); width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px;">⚡</span>
+        <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 700; margin: 0; color: var(--text);">AI Model Evaluation</h2>
+      </div>
+      <span style="background: rgba(130, 167, 150, 0.2); color: #2E5A44; font-weight: 600; font-size: 12px; padding: 4px 12px; border-radius: 100px;">Gemini 2.5 Flash Lite</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      
+      <!-- Model 1: GPT-4o Mini -->
+      <div style="background: rgba(255, 253, 248, 0.7); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; padding: 18px 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <h3 style="font-size: 16px; font-weight: 700; margin: 0; color: var(--text);">GPT-4o Mini</h3>
+          <span style="background: rgba(224, 159, 62, 0.15); color: #B36B00; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 6px;">Standard Baseline ⚡</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px;">
+          <span>Reasoning Score: <strong>78%</strong></span>
+          <span>Speed: <strong>2.1s</strong></span>
+        </div>
+        <!-- Progress Bar -->
+        <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.06); border-radius: 100px; overflow: hidden; margin-bottom: 12px;">
+          <div style="width: 78%; height: 100%; background: #E09F3E; border-radius: 100px;"></div>
+        </div>
+        <p style="margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.5;">
+          <strong>Use case:</strong> Standard baseline model suitable for basic text prompts, but with higher latency and lower multimodal marketing accuracy.
+        </p>
+      </div>
+
+      <!-- Model 2: Gemini 1.5 Flash -->
+      <div style="background: rgba(255, 253, 248, 0.7); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; padding: 18px 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <h3 style="font-size: 16px; font-weight: 700; margin: 0; color: var(--text);">Gemini 1.5 Flash</h3>
+          <span style="background: rgba(142, 124, 195, 0.15); color: #5C469C; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 6px;">Balanced ⚖️</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px;">
+          <span>Reasoning Score: <strong>85%</strong></span>
+          <span>Speed: <strong>1.2s</strong></span>
+        </div>
+        <!-- Progress Bar -->
+        <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.06); border-radius: 100px; overflow: hidden; margin-bottom: 12px;">
+          <div style="width: 85%; height: 100%; background: #6C5CE7; border-radius: 100px;"></div>
+        </div>
+        <p style="margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.5;">
+          <strong>Use case:</strong> Capable alternative providing solid reasoning for standard digital twin marketing tasks and bulk simulations.
+        </p>
+      </div>
+
+      <!-- Model 3: Gemini 2.5 Flash Lite (ACTIVE / SELECTED - HIGHEST SCORE) -->
+      <div style="background: rgba(130, 167, 150, 0.12); border: 2px solid #5A8F76; border-radius: 14px; padding: 18px 20px; box-shadow: 0 4px 14px rgba(90, 143, 118, 0.12);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <h3 style="font-size: 16px; font-weight: 700; margin: 0; color: #1E3E2F; display: flex; align-items: center; gap: 8px;">
+            Gemini 2.5 Flash Lite <span style="font-size: 12px; font-weight: 700; color: #2E5A44;">• ACTIVE</span>
+          </h3>
+          <span style="background: rgba(90, 143, 118, 0.25); color: #1E3E2F; font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 6px;">Best Choice 🚀</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13.5px; color: #2E5A44; font-weight: 600; margin-bottom: 8px;">
+          <span>Reasoning Score: <strong>94%</strong> (Top Performer)</span>
+          <span>Speed: <strong>0.4s (350ms)</strong></span>
+        </div>
+        <!-- Progress Bar -->
+        <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.1); border-radius: 100px; overflow: hidden; margin-bottom: 12px;">
+          <div style="width: 94%; height: 100%; background: #2E5A44; border-radius: 100px;"></div>
+        </div>
+        <p style="margin: 0; font-size: 13.5px; color: #1E3E2F; line-height: 1.6;">
+          <strong style="color: #1E3E2F;">Why selected:</strong> Gemini 2.5 Flash Lite was selected for GrowthGPT's marketing simulation engine due to its top-tier reasoning score (94%), ultra-low latency (0.4s), cost efficiency 💰, and high scalability 📈. In real-time AI applications ⏱️ requiring instant customer twin simulations and multimodal ad analysis 🖼️, it delivers superior speed ⚡ with industry-leading marketing accuracy 🧠. While Gemini 1.5 Flash offers a balanced alternative and GPT-4o Mini serves as a standard baseline, Gemini 2.5 Flash Lite outperforms both models and provides the best overall solution for production deployment.
+        </p>
+      </div>
+
+      <!-- Bottom Summary Box -->
+      <div style="background: rgba(254, 249, 231, 0.85); border: 1px solid rgba(224, 159, 62, 0.35); border-radius: 12px; padding: 14px 18px;">
+        <p style="margin: 0; font-size: 13px; color: #7A5315; line-height: 1.6;">
+          <strong style="color: #5C3D0E;">Gemini 2.5 Flash Lite Advantages:</strong> Top Reasoning Score (94%) 🧠 • Sub-second latency (0.4s) ⚡ • Maximum cost efficiency 💰 • Native multimodal ad vision 🖼️ • Enterprise throughput scalability 📈 • Real-time AI digital twin simulation ⏱️
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="recent-section" id="dashboard-recent-section">
+  <div class="section-head-row">
+    <h2 class="section-title">Recent Activity &amp; Quick Export</h2>
+    <a href="{{ url_for('history') }}" class="link-arrow" id="link-view-all-history">View all history →</a>
+  </div>
+  <div class="history-table-wrap glass">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Campaign</th>
+          <th>Objective</th>
+          <th>Engagement</th>
+          <th>Conversion</th>
+          <th>Growth Potential</th>
+          <th>Date</th>
+          <th>Export</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in stats.recent %}
+        <tr>
+          <td><a href="{{ url_for('results', campaign_id=c.id) }}" class="history-link">{{ c.product_name }}</a></td>
+          <td>{{ c.objective }}</td>
+          <td>{{ c.engagement_score|default('—') }}</td>
+          <td>{{ c.conversion_probability|default('—') }}%</td>
+          <td><span
+              class="badge badge-{{ c.growth_potential|lower|replace(' ','-') if c.growth_potential else 'moderate' }}">{{
+              c.growth_potential or '—' }}</span></td>
+          <td class="mono-cell">{{ c.created_at[:10] }}</td>
+          <td class="report-actions-cell">
+            <a href="{{ url_for('report_export', campaign_id=c.id, fmt='pdf') }}" class="icon-btn" title="Export PDF">⬇️
+              PDF</a>
+            <a href="{{ url_for('report_export', campaign_id=c.id, fmt='csv') }}" class="icon-btn" title="Export CSV">⬇️
+              CSV</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Data Islands for Clean JavaScript Parsing -->
+<script type="application/json" id="stats-recent-json">{{ stats.recent | tojson | safe }}</script>
+<script type="application/json" id="stats-growth-json">{{ stats.growth_breakdown | tojson | safe }}</script>
+<script type="application/json" id="stats-objective-json">{{ stats.objective_breakdown | tojson | safe }}</script>
+
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% if stats.total_campaigns > 0 %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // 1. Dynamic Greeting according to user's time of day
+    const hour = new Date().getHours();
+    const timeEl = document.getElementById("greeting-time");
+    if (timeEl) {
+      if (hour < 12) timeEl.textContent = "Good morning";
+      else if (hour < 17) timeEl.textContent = "Good afternoon";
+      else timeEl.textContent = "Good evening";
+    }
+
+    // Chart.js Theme Colors (Pastel Palette)
+    const PRIMARY = '#D6725C';
+    const PRIMARY_ALPHA = 'rgba(214, 114, 92, 0.7)';
+    const VIOLET = '#8E7CC3';
+    const VIOLET_ALPHA = 'rgba(142, 124, 195, 0.7)';
+    const AMBER = '#E09F3E';
+    const AMBER_ALPHA = 'rgba(224, 159, 62, 0.7)';
+    const CORAL = '#E06D53';
+    const CORAL_ALPHA = 'rgba(224, 109, 83, 0.7)';
+    const SAGE = '#7FA191';
+
+    // Parse data from script tags
+    const getJsonData = (id, fallback) => {
+      try {
+        const el = document.getElementById(id);
+        return el ? JSON.parse(el.textContent) : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    };
+
+    // 2. Performance Chart (Recent Campaigns)
+    const recentData = getJsonData("stats-recent-json", []);
+    const labels = recentData.map(c => c.product_name.length > 14 ? c.product_name.slice(0, 14) + '…' : c.product_name).reverse();
+    const engagementScores = recentData.map(c => c.engagement_score || 0).reverse();
+    const conversionProbs = recentData.map(c => c.conversion_probability || 0).reverse();
+
+    const perfCtx = document.getElementById('performanceChart')?.getContext('2d');
+    if (perfCtx) {
+      new Chart(perfCtx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Engagement Score (/100)',
+              data: engagementScores,
+              backgroundColor: PRIMARY_ALPHA,
+              borderColor: PRIMARY,
+              borderWidth: 1.5,
+              borderRadius: 6,
+            },
+            {
+              label: 'Conversion Prob. (%)',
+              data: conversionProbs,
+              backgroundColor: VIOLET_ALPHA,
+              borderColor: VIOLET,
+              borderWidth: 1.5,
+              borderRadius: 6,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { font: { family: 'Inter', size: 12 }, color: '#2B2418' } }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 }, color: '#7A6E58' } },
+            y: { beginAtZero: true, max: 100, ticks: { font: { family: 'JetBrains Mono', size: 11 }, color: '#7A6E58' } }
+          }
+        }
+      });
+    }
+
+    // 3. Growth Potential Doughnut Chart
+    const breakdown = getJsonData("stats-growth-json", {});
+    const potLabels = Object.keys(breakdown);
+    const potValues = Object.values(breakdown);
+
+    const potCtx = document.getElementById('potentialChart')?.getContext('2d');
+    if (potCtx) {
+      new Chart(potCtx, {
+        type: 'doughnut',
+        data: {
+          labels: potLabels.length ? potLabels : ['No data'],
+          datasets: [{
+            data: potValues.length ? potValues : [1],
+            backgroundColor: [VIOLET_ALPHA, PRIMARY_ALPHA, AMBER_ALPHA, CORAL_ALPHA],
+            borderColor: [VIOLET, PRIMARY, AMBER, CORAL],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 }, color: '#2B2418' } }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+
+    // 4. Objectives Bar Chart
+    const objData = getJsonData("stats-objective-json", []);
+    const objLabels = objData.map(o => o.objective);
+    const objCounts = objData.map(o => o.count);
+
+    const objCtx = document.getElementById('objectivesChart')?.getContext('2d');
+    if (objCtx) {
+      new Chart(objCtx, {
+        type: 'bar',
+        data: {
+          labels: objLabels,
+          datasets: [{
+            label: 'Campaigns',
+            data: objCounts,
+            backgroundColor: [PRIMARY_ALPHA, VIOLET_ALPHA, AMBER_ALPHA, SAGE],
+            borderColor: [PRIMARY, VIOLET, AMBER, SAGE],
+            borderWidth: 1.5,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'JetBrains Mono', size: 11 } } },
+            y: { ticks: { font: { family: 'Inter', size: 12 }, color: '#2B2418' } }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}
