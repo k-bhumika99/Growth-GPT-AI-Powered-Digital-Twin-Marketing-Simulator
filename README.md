@@ -66,3 +66,6 @@ growthgpt/
     ├── css/style.css        # design system + animations
     └── js/main.js            # animated emoji background field
 ```
+
+##Deployment
+ https://alarm-poker-frustrate.ngrok-free.dev 
